@@ -1,0 +1,60 @@
+
+<style>
+body {
+  width: 600px;
+}
+</style>
+
+```{r echo=FALSE, message=FALSE, warnings=FALSE}
+opts_chunk$set(echo = FALSE, messages = FALSE, 
+               fig.height = 6, fig.width = 6)
+```
+
+# Austrian national guest survey: AA versus PAA
+
+```{r results='hide', message=FALSE, warning=FALSE, error=FALSE}
+source("helpers.R")
+```
+
+This document reproduces the comparison of the probabilistic and the
+classical archetypes in the example "Austrian national guest survey"
+presented in the paper "[Probabilistic archetypal analysis](http://arxiv.org/abs/1312.7604)" by Seth and Eugster (2014). The [Rmd file](GSAW97-report-aa.Rmd) lists the 
+corresponding [R](http://www.r-project.org) code.
+
+
+```{r results='asis', message=FALSE, warning=FALSE}
+cat("* Read tourist data from file `GSAW97_bin.csv`\n")
+GSAW97bin <- read.csv2("data_GSAW97/GSAW97_bin.csv")
+
+cat("* Load precomputed PAA solution from file `GSAW97_paa.mat`\n")
+paa <- load_paa("data_GSAW97/GSAW97_paa.mat", GSAW97bin)
+
+cat("* Load precomputed AA solution from file `GSAW97_aa.Rds`\n")
+aa <- readRDS("data_GSAW97/GSAW97_aa.Rds")
+
+cat("* Match AA solution with PAA solution\n")
+match <- greedy_match(aa$archetypes, t(paa$Z))
+match <- match[c(1, 3, 5, 4, 6, 2), ]
+```
+
+
+#### Probabilistic archetypes:
+
+```{r}
+thepaa <- paa$Z
+colnames(thepaa) <- sprintf("PAA%s", 1:6)
+round(thepaa[, match[, "PAA"]], 1)
+```
+
+
+#### Classical archetypes:
+
+The classical archetypes were computed with the [archetypes](cran.r-project.org/package=archetypes)
+package. The presented solution is the best solution out of twenty
+repetitions.
+
+```{r}
+theaa <- t(aa$archetypes)
+colnames(theaa) <- sprintf(" AA%s", 1:6)
+round(theaa[, match[, "AA"]], 1)
+```

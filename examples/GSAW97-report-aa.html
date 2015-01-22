@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=9" >
+
+<title>Austrian national guest survey: AA versus PAA</title>
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 12px;
+   margin: 8px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre {	
+   margin-top: 0;
+   max-width: 95%;
+   border: 1px solid #ccc;
+   white-space: pre-wrap;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+
+</style>
+
+
+
+
+
+</head>
+
+<body>
+<style>
+body {
+  width: 600px;
+}
+</style>
+
+<h1>Austrian national guest survey: AA versus PAA</h1>
+
+<p>This document reproduces the comparison of the probabilistic and the
+classical archetypes in the example &ldquo;Austrian national guest survey&rdquo;
+presented in the paper &ldquo;<a href="http://arxiv.org/abs/1312.7604">Probabilistic archetypal analysis</a>&rdquo; by Seth and Eugster (2014). The <a href="GSAW97-report-aa.Rmd">Rmd file</a> lists the 
+corresponding <a href="http://www.r-project.org">R</a> code.</p>
+
+<ul>
+<li>Read tourist data from file <code>GSAW97_bin.csv</code></li>
+<li>Load precomputed PAA solution from file <code>GSAW97_paa.mat</code></li>
+<li>Load precomputed AA solution from file <code>GSAW97_aa.Rds</code></li>
+<li>Match AA solution with PAA solution</li>
+</ul>
+
+<h4>Probabilistic archetypes:</h4>
+
+<pre><code>##                   PAA1 PAA3 PAA5 PAA4 PAA6 PAA2
+## A01.alpine.ski     1.0  1.0  1.0  1.0  0.0  0.0
+## A02.tour.ski       0.4  0.0  0.0  0.0  0.0  0.0
+## A03.snowboard      0.0  0.0  0.0  0.6  0.0  0.0
+## A04.cross.country  0.7  0.0  0.0  0.0  0.0  0.0
+## A05.ice.skating    0.6  0.0  0.0  0.0  0.0  0.0
+## A06.sledge         1.0  0.0  0.0  0.0  0.0  0.0
+## A07.tennis         0.1  0.0  0.0  0.0  0.0  0.2
+## A08.riding         0.0  0.0  0.0  0.0  0.0  0.1
+## A09.pool.sauna     1.0  0.0  0.4  1.0  0.8  0.1
+## A10.spa            0.2  0.0  0.0  0.0  0.8  0.0
+## A11.hiking         1.0  0.0  0.0  0.0  1.0  0.2
+## A12.walk           1.0  0.0  1.0  0.0  1.0  1.0
+## A13.org.excursion  0.3  0.0  0.0  0.0  0.0  0.4
+## A14.ind.excursion  0.8  0.0  0.0  0.0  0.9  1.0
+## A15.relax          1.0  0.0  1.0  1.0  1.0  0.8
+## A16.dinner         0.8  0.5  0.9  0.0  0.0  1.0
+## A17.shopping       1.0  0.0  1.0  0.0  0.3  1.0
+## A18.concert        0.0  0.0  0.0  0.0  0.0  0.3
+## A19.sightseeing    0.7  0.0  0.0  0.0  0.7  1.0
+## A20.heimat         0.6  0.0  0.0  0.0  0.0  0.0
+## A21.museum         0.0  0.0  0.0  0.0  0.0  1.0
+## A22.theater        0.0  0.0  0.0  0.0  0.0  0.3
+## A23.heurigen       0.0  0.0  0.0  0.0  0.0  0.4
+## A24.local.event    1.0  0.0  0.0  0.0  0.0  0.1
+## A25.disco          0.7  0.0  0.0  1.0  0.0  0.1
+</code></pre>
+
+<h4>Classical archetypes:</h4>
+
+<p>The classical archetypes were computed with the <a href="cran.r-project.org/package=archetypes">archetypes</a>
+package. The presented solution is the best solution out of twenty
+repetitions.</p>
+
+<pre><code>##                    AA5  AA3  AA2  AA4  AA1  AA6
+## A01.alpine.ski     1.0  1.0  1.0  0.8  0.4  0.0
+## A02.tour.ski       0.4  0.0  0.0  0.0  0.1  0.0
+## A03.snowboard      0.0  0.0  0.0  1.0  0.1  0.0
+## A04.cross.country  1.0  0.0  0.0  0.0  0.0  0.1
+## A05.ice.skating    0.9  0.0  0.0  0.0  0.0  0.0
+## A06.sledge         1.0  0.0  0.1  0.2  0.0  0.0
+## A07.tennis         0.1  0.0  0.0  0.1  0.3  0.0
+## A08.riding         0.0  0.0  0.0  0.0  0.2  0.0
+## A09.pool.sauna     1.0  0.0  1.0  0.5  0.8  0.0
+## A10.spa            0.2  0.0  0.3  0.0  0.6  0.2
+## A11.hiking         0.9  0.0  0.0  0.0  0.4  0.9
+## A12.walk           1.0  0.0  0.8  0.8  0.9  1.0
+## A13.org.excursion  0.2  0.0  0.0  0.1  0.6  0.1
+## A14.ind.excursion  0.7  0.0  0.0  0.1  0.8  1.0
+## A15.relax          0.9  0.0  1.0  1.0  0.9  0.9
+## A16.dinner         0.6  0.7  0.0  1.0  0.9  0.7
+## A17.shopping       0.7  0.0  0.4  1.0  0.8  0.9
+## A18.concert        0.0  0.0  0.0  0.0  0.7  0.0
+## A19.sightseeing    0.5  0.0  0.0  0.0  1.0  1.0
+## A20.heimat         0.5  0.0  0.0  0.0  0.3  0.0
+## A21.museum         0.0  0.0  0.0  0.0  1.0  0.4
+## A22.theater        0.0  0.0  0.0  0.0  0.9  0.0
+## A23.heurigen       0.0  0.0  0.0  0.0  0.7  0.1
+## A24.local.event    0.7  0.0  0.0  0.2  0.7  0.0
+## A25.disco          0.5  0.4  0.0  1.0  0.4  0.0
+</code></pre>
+
+</body>
+
+</html>
+
