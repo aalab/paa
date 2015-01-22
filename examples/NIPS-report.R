@@ -1,0 +1,127 @@
+
+## ----echo=FALSE, message=FALSE, warnings=FALSE---------------------------
+opts_chunk$set(echo = FALSE, messages = FALSE, 
+               fig.height = 6, fig.width = 6)
+
+
+## ----results='hide', message=FALSE, warning=FALSE, error=FALSE-----------
+library("colorspace")
+library("RColorBrewer")
+library("plotrix")
+
+source("helpers.R")
+
+
+## ----results='asis'------------------------------------------------------
+cat("* Read data\n")
+docword <- read.table("data_NIPS/docword.nips.txt", header = FALSE, skip = 3,
+                      col.names = c("docID", "wordID", "count"))
+
+ndocs <- max(docword$docID)
+nwords <- max(docword$wordID)
+
+tf <- matrix(0, nrow = ndocs, ncol = nwords)
+tf[cbind(docword$docID, docword$wordID)] <- docword$count
+
+uw <- as.logical(readMat("data_NIPS/useless-words.mat")$useless.words)
+words <- readLines("data_NIPS/vocab.nips.txt")
+words <- words[!uw]
+
+tf <- tf[, !uw]
+tf <- tf / rowSums(tf)
+
+cat("* Load precomputed PAA solution from file `NIPS_paa.mat`\n")
+paa <- load_paa("data_NIPS/NIPS_paa.mat", tf)
+
+
+## ----fig.height=4--------------------------------------------------------
+op <- par(mar = c(4, 4, 1, 1))
+plot(paa$obj, type = "l", xlab = "Iterations", ylab = "Cost")
+par(op)
+
+
+## ----fig.height=6, fig.width=10------------------------------------------
+atypes_words <- function(s) {
+  o <- t(apply(s$Z, 2, order, decreasing = TRUE))
+  
+  top <- t(apply(o, 1, function(i) words[i]))
+  dimnames(top) <- list(sprintf("A%s", 1:10), NULL)
+  
+  top
+}
+
+interesting_atypes_words <- function(s, n = 3000) {
+  t <- atypes_words(s)
+  
+  cw <- table(as.character(t[, seq(n)]))
+  cw <- names(cw[cw == 10])
+  
+  t(apply(t, 1, setdiff, cw))
+}
+
+morup_words <- rbind(
+  c("object", "image", "images", "face", "visual", "pixel", "view", "recognition", "facial", "motion"),
+  c("policy", "action", "reinforcement", "mdp", "reward", "pomdp", "routing", "agent", "controller", "robot"),
+  c("eye", "movement", "vor", "motor", "velocity", "arm", "motion", "ocular", "apg", "eeg"),
+  c("chip", "circuit", "analog", "voltage", "vlsi", "transistor", "pulse", "synapse", "neuron", "gate"),
+  c("scheduler", "instruction", "rollout", "schedule", "block", "scheduling", "dec", "execution", "moss", "scheeff"),
+  c("classifier", "kernel", "training", "bound", "svm", "error", "algorithm", "weight", "margin", "tree"),
+  c("dialogue", "toot", "user", "elvis", "rid", "dialogues", "attributes", "reward", "informational", "mdp"),
+  c("neuron", "spike", "cell", "synaptic", "firing", "cortical", "stimulus", "synapses", "membrane", "excitatory"),
+  c("cell", "head", "rat", "predisposition", "direction", "chick", "ahd", "cue", "mcnaughton", "imprinting"),
+  c("hmm", "speech", "word", "speaker", "mlp", "recognition", "classifier", "acoustic", "phoneme", "tdnn"))
+
+morup_atypes <- c(2, NA, 4, NA, 6, 1, 8, NA, NA, NA)
+
+cols <- brewer.pal(10, "Set3")
+cols[9] <- "darkgray"
+
+o <- t(apply(paa$Z, 2, order, decreasing = TRUE))
+colnames(o) <- words
+
+paa_iw <- interesting_atypes_words(paa)
+o_a1 <- apply(paa_iw, 1, function(x) match(x, colnames(o)))
+
+rs <- function(x) {
+  log(1 + 200 * x)
+}
+
+atypes_inter <- c(
+  "Reinforce.\nLearn.", "Bayesian\nParadigm",
+  "Theoret.\nNeuros.", "Brain\nAnalys.",
+  "Learning\nTheory", "Speech\nProces.", "Hardware\n", NA, NA, NA)
+
+
+op <- par(mar = c(1, 3, 0.1, 0.8), mgp = c(1, 0.5, 0), ps = 8)
+matplot(rs(t(paa$Z)), type = "n", lty = 1, col = "lightgray", axes = FALSE,
+        xlab = "", ylab = "", ylim = rs(c(0, 0.04)))
+abline(v = 1:10, lty = 2)
+
+ax <- sprintf("A%s", 1:10)
+ax <- paste(ax,
+            ifelse(is.na(morup_atypes), "", sprintf(" (%s)", morup_atypes)), sep = "")
+mtext(ax, side = 1, line = 0, at = 1:10)
+#mtext(atypes_inter, side = 1, line = 1.5, at = 1:10, cex = 0.8)
+
+ay <- seq(0, 0.04, length = 4)
+axis(2, at = rs(ay), labels = round(ay, 2), line = 0.6, cex.axis = 0.8)
+mtext("Probability", side = 2, line = 2, cex = 0.8)
+
+matplot(rs(t(paa$Z)), type = "l", lty = 1, col = gray(0.9), add = TRUE)
+
+for ( i in 1:10 ) {
+  matplot(rs(t(paa$Z[o_a1[1:10, i], ])), type = "l", lty = 1, col = cols[i], add = TRUE)
+  py <- seq(rs(0.007), rs(0.040), length.out = 10)
+  if ( i %% 2 == 0 )
+    py <- py - rs(0.0004)
+  
+  w <- rev(paa_iw[i, 1:10])
+  star <- w %in% morup_words[morup_atypes[i], ]
+  w <- paste(w, ifelse(star, "*", ""), sep = "")
+  
+  boxed.labels(i-0.3, py, labels = w, adj = 0, xpd = TRUE,
+               bg = "white", border = NA, cex = 1.5)
+}
+par(op)
+
+
