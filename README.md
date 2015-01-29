@@ -5,9 +5,9 @@ Scripts for probabilistic archetypal analysis ([Seth and Eugster,
 
 MATLAB scripts to reproduce figures:
  - [Demo](https://cdn.rawgit.com/aalab/paa/master/examples/demo.html) ([MATLAB script](scripts/demo.m))
- - [Classic AA on binary data](https://cdn.rawgit.com/aalab/paa/master/examples/compareprobvsclassic_Bernoulli.html) ([matlab script](scripts/compareprobvsclassic_Bernoulli.m))
- - [Classic AA on Poisson data](https://cdn.rawgit.com/aalab/paa/master/examples/compareprobvsclassic_Poisson.html) ([matlab script](scripts/compareprobvsclassic_Poisson.m))
- - [Classic AA on multinomial data](https://cdn.rawgit.com/aalab/paa/master/examples/compareprobvsclassic_multinomial.html) ([matlab script](scripts/compareprobvsclassic_multinomial.m))
+ - [Classic AA on binary data](https://cdn.rawgit.com/aalab/paa/master/examples/compareProbVsClassic_Bernoulli.html) ([MATLAB script](scripts/compareProbVsClassic_Bernoulli.m))
+ - [Classic AA on Poisson data](https://cdn.rawgit.com/aalab/paa/master/examples/compareProbVsClassic_Poisson.html) ([MATLAB script](scripts/compareProbVsClassic_Poisson.m))
+ - [Classic AA on multinomial data](https://cdn.rawgit.com/aalab/paa/master/examples/compareProbVsClassic_multinomial.html) ([MATLAB script](scripts/compareProbVsClassic_multinomial.m))
  - [Convergence](https://cdn.rawgit.com/aalab/paa/master/examples/plotConvergence.html) ([MATLAB script](examples/plotConvergence.m))
  - [Negative log-likelihood](https://cdn.rawgit.com/aalab/paa/master/examples/plotProbVsDefault.html) ([MATLAB script](examples/plotProbVsDefault.m))
 
