@@ -13,10 +13,15 @@ function [matSamLat, matLatSam, obj] = paa_stochastic(nFeatSam, nLat, options)
 %       verbose, switch for textual display, default is false
 %       display, switch for graphical display, default is false
 %       maxIter, maximum number of iterations, default is 10000
+%       matFeatLat, archetypes, if not empty then matFeatSam is projected on these archetypes
 %
 %   obj is an optional vector storing the value of objective function
 %
 %   copyright (c) Sohan Seth, sohan.seth@hiit.fi
+
+if any(isnan(nFeatSam))
+    error('nan in data matrix')
+end
 
 if nargin < 2
     error('Observation matrix and number of archetypes must be provided');
@@ -30,6 +35,10 @@ eps = options.eps;
 verbose = options.verbose;
 display = options.display;
 maxIter = options.maxIter;
+matFeatLat = options.matFeatLat;
+if ~isempty(matFeatLat)
+    nLat = size(matFeatLat, 2);
+end
 clear options
 
 obj = zeros(maxIter, 1); obj(:) = Inf;
@@ -41,7 +50,7 @@ if display && nFeat > 2
 end
 
 if display
-    figureMain = figure;
+    figureMain = figure('papertype', 'a4', 'paperposition', [0 0 3.5 3.5]);
 end
 
 % Normalize each column
@@ -51,11 +60,16 @@ matFeatSam = nFeatSam ./ repmat(sum(nFeatSam), nFeat, 1);
 matSamLat = rand(nSam,nLat); matSamLat = bsxfun(@rdivide,matSamLat,sum(matSamLat));
 matLatSam = rand(nLat,nSam); matLatSam = bsxfun(@rdivide,matLatSam,sum(matLatSam));
 
-computeCost = @(nFeatSam, matFeatSam, matSamLat, matLatSam, epsilon)...
-    (sum(sum(nFeatSam .* log(epsilon + matFeatSam * matSamLat * matLatSam),2)));
+% Negative log likelihood
+computeCost = @(matFeatLat, matLatSam, nFeatSam, epsilon)...
+    (- sum(sum(nFeatSam .* log(epsilon + matFeatLat * matLatSam),2)));
 
-epsilon = 10^-12;  % Avoiding log(0) and division by 0
-obj(1) = computeCost(nFeatSam, matFeatSam, matSamLat, matLatSam, epsilon);
+epsilon = 10^-16;  % Avoiding log(0) and division by 0
+if isempty(matFeatLat)
+    obj(1) = computeCost(matFeatSam * matSamLat, matLatSam, nFeatSam, epsilon);
+else
+    obj(1) = computeCost(matFeatLat, matLatSam, nFeatSam, epsilon);
+end
 for iter = 1:maxIter
     if verbose
         if ~mod(iter, 10)
@@ -66,18 +80,32 @@ for iter = 1:maxIter
         end
     end
     
-    % Expectation
-    temp = nFeatSam ./ (matFeatSam * matSamLat * matLatSam);
-    
-    matSamLatNew = (epsilon + matFeatSam' * temp * matLatSam') .* matSamLat;
-    matLatSamNew = (epsilon + matSamLat' * matFeatSam' * temp) .* matLatSam;
-    
-    % Maximization
-    matSamLat = matSamLatNew ./ repmat(sum(matSamLatNew), nSam, 1);
-    matLatSam = matLatSamNew ./ repmat(sum(matLatSamNew), nLat, 1);
+    if isempty(matFeatLat)
+        % Expectation
+        temp = nFeatSam ./ (matFeatSam * matSamLat * matLatSam);
+        
+        matSamLatNew = (epsilon + matFeatSam' * temp * matLatSam') .* matSamLat;
+        matLatSamNew = (epsilon + matSamLat' * matFeatSam' * temp) .* matLatSam;
+        
+        % Maximization
+        matSamLat = bsxfun(@rdivide,matSamLatNew,sum(matSamLatNew));
+        matLatSam = bsxfun(@rdivide,matLatSamNew,sum(matLatSamNew));
+        
+        % Convergence
+        obj(iter+1) = computeCost(matFeatSam * matSamLat, matLatSam, nFeatSam, epsilon);;
+    else
+        % Expectation
+        temp = nFeatSam ./ (matFeatLat * matLatSam);
+        
+        matLatSamNew = (epsilon + matFeatLat' * temp) .* matLatSam;
+        
+        % Maximization
+        matLatSam = bsxfun(@rdivide,matLatSamNew,sum(matLatSamNew));
+        
+        obj(iter+1) = computeCost(matFeatLat, matLatSam, nFeatSam, epsilon);
+    end
     
     % Convergence
-    obj(iter+1) = computeCost(nFeatSam, matFeatSam, matSamLat, matLatSam, epsilon);    
     if abs((obj(iter+1) - obj(iter))/obj(iter)) < eps
         if verbose
             fprintf('\nconvergence reached in %d iterations\n', iter)
@@ -91,14 +119,18 @@ for iter = 1:maxIter
         plot(nFeatSam(1,:), nFeatSam(2,:),'o','markerfacecolor','b','markeredgecolor',[1 1 1])
         nFeatLat = nFeatSam * matSamLat;
         plot(nFeatLat(1,:), nFeatLat(2,:),'o','markerfacecolor','r','markeredgecolor',[1 1 1])
-        hold off,
-    end 
+        hold off, pause(0.01)
+    end
 end
 
 if iter == maxIter && verbose
-    fprintf('\nmaximum iteration reached\n')    
+    fprintf('\nmaximum iteration reached\n')
 end
 fprintf('\n')
 if nargout == 3
     obj(isinf(obj)) = [];
+end
+
+if ~isempty(matFeatLat)
+    matSamLat = [];
 end
