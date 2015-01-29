@@ -1,0 +1,614 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>compareProbVsClassic_multinomial</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-01-29"><meta name="DC.source" content="compareProbVsClassic_multinomial.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Multinomial data</a></li></ul></div><pre class="codeinput"><span class="comment">% Qualitative assessment of probabilistic archetypal analysis and standard</span>
+<span class="comment">% archetypal analysis by Cutler and Breiman on different observation models</span>
+<span class="comment">%</span>
+<span class="comment">% Additional info: Figures 4, 5 and 6 in article Probabilistic Archetypal</span>
+<span class="comment">% Analysis by Seth and Eugster in Machine Learning Journal</span>
+<span class="comment">%</span>
+<span class="comment">% Copyright Sohan Seth sohan.seth@hiit.fi</span>
+
+close <span class="string">all</span>,  <span class="comment">%clearvars -except saveFigure plotFigure maxStart;</span>
+chooseFigure = 6;
+saveFigure = 0; plotFigure = 1; maxTrial = 10; <span class="comment">% 10 for figure, 100 for NLL</span>
+maxStart = 10; <span class="comment">% Run PAA maxStart times and take best solution</span>
+
+computeCostBernoulli = @(X, P)(sum(sum(-X.*log(double(P + eps)))) <span class="keyword">...</span>
+    + sum(sum(-(1 - X).*log(1 - double(P) + eps))) );
+computeCostPoisson = @(X, R)(sum(sum(- X .* log(R + eps) + R)));
+computeCostStochastic = @(X, P)<span class="keyword">...</span>
+    (- sum(sum(X .* log(P + eps),2)));
+</pre><h2>Multinomial data<a name="2"></a></h2><pre class="codeinput">rng <span class="string">default</span>, close <span class="string">all</span>,
+MARKERSIZE = 4; FONTSIZE = 6;
+<span class="keyword">if</span> plotFigure; hMain = figure(<span class="string">'papersize'</span>,[8.5 11],<span class="string">'paperposition'</span>,[0 0 8 2]); <span class="keyword">end</span>;
+setenv(<span class="string">'DYLD_LIBRARY_PATH'</span>, <span class="string">'/usr/local/bin/'</span>);
+
+d = 3;          <span class="comment">% Dimensionality</span>
+K = 5;          <span class="comment">% Number of archetypes</span>
+n = 500;        <span class="comment">% Number of observations (500 for figure, 100 otherwise)</span>
+colorList = summer(maxTrial);
+gammaParam = 0.5; <span class="comment">% Concentration of Dirichlet distribution for H</span>
+<span class="keyword">if</span> d ~= 3
+    fprintf(<span class="string">'Only valid for d = 3.\n'</span>)
+<span class="keyword">end</span>
+matFeatLat = convexCircle(K);
+matLatSam = gamrnd(gammaParam, 1, K, n); matLatSam = bsxfun(@rdivide, matLatSam, sum(matLatSam));
+matFeatSam = matFeatLat * matLatSam;
+nFeatSam = mnrnd(ceil(1000*rand(n,1) + 1000), matFeatSam')';
+
+options = generate_options();
+options.maxIter = 1000;
+options.verbose = false;
+options.eps = 10^-6;
+options.display = 0;
+
+matFeatSam = bsxfun(@rdivide, nFeatSam, sum(nFeatSam));
+l1List = zeros(maxTrial, 2); nllList = zeros(maxTrial, 2);
+<span class="keyword">for</span> countTrial = 1:maxTrial
+    matSamLatEM = cell(maxStart,1);
+    matLatSamEM = cell(maxStart,1);
+    objEM = cell(maxStart,1);
+    <span class="keyword">for</span> count = 1:maxStart
+        [matSamLatEM{count}, matLatSamEM{count}, objEM{count}] = paa_stochastic(nFeatSam, K, options);
+    <span class="keyword">end</span>
+    [~, ind] = min(cellfun(@(x)(x(end)), objEM));
+    matSamLatEM = matSamLatEM{ind};
+    matLatSamEM = matLatSamEM{ind};
+
+    <span class="keyword">if</span> plotFigure
+        figure(hMain)
+        subplot(131),
+        <span class="keyword">if</span> countTrial == 1
+            set(gca,<span class="string">'fontsize'</span>,FONTSIZE), box <span class="string">on</span>
+            hold <span class="string">on</span>
+            plot(matFeatSam(1,:),matFeatSam(2,:),<span class="string">'o'</span>,<span class="string">'markersize'</span>,MARKERSIZE,<span class="string">'markerfacecolor'</span>,[0.5 0.5 0.5],<span class="string">'markeredgecolor'</span>,<span class="string">'b'</span>)
+        <span class="keyword">end</span>
+        <span class="keyword">if</span> countTrial == maxTrial
+            <span class="comment">%ind = convhull(matFeatSam(1:2,:)');</span>
+            <span class="comment">%hold on, plot(matFeatSam(1,ind), matFeatSam(2,ind), '-', 'color', [0.5 0.5 0.5]); hold off</span>
+            title(<span class="string">'(a) EM solution in the latent space'</span>)
+            grid <span class="string">on</span>
+        <span class="keyword">end</span>
+        matFeatLatEM = matFeatSam * matSamLatEM;
+        plot(matFeatLatEM(1,:),matFeatLatEM(2,:),<span class="string">'ro'</span>,<span class="string">'markersize'</span>,MARKERSIZE+2,<span class="string">'markerfacecolor'</span>,colorList(countTrial,:),<span class="string">'markeredgecolor'</span>,[0.5 0.5 0.5])
+        ind = convhull(matFeatLatEM(1:2,:)');
+        plot(matFeatLatEM(1,ind), matFeatLatEM(2,ind), <span class="string">'-'</span>, <span class="string">'color'</span>, [0.5 0.5 0.5]);
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> plotFigure
+        [matSamLatClassic, matLatSamClassic, objClassic] = classic_aa_plot(nFeatSam + rand(size(nFeatSam)), K);
+    <span class="keyword">else</span>
+        [matSamLatClassic, matLatSamClassic, objClassic] = classic_aa(nFeatSam + rand(size(nFeatSam)), K);
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> plotFigure
+        figure(hMain)
+        subplot(132),
+        <span class="keyword">if</span> countTrial == 1
+            set(gca,<span class="string">'fontsize'</span>,FONTSIZE), box <span class="string">on</span>
+            hold <span class="string">on</span>
+            plot(nFeatSam(1,:),nFeatSam(2,:),<span class="string">'o'</span>,<span class="string">'markersize'</span>,MARKERSIZE,<span class="string">'markerfacecolor'</span>,[0.5 0.5 0.5],<span class="string">'markeredgecolor'</span>,<span class="string">'b'</span>)
+        <span class="keyword">end</span>
+        <span class="keyword">if</span> countTrial == maxTrial
+            title(<span class="string">'(b) Standard solution in the observation space'</span>)
+            grid <span class="string">on</span>
+        <span class="keyword">end</span>
+        matFeatLatClassic = nFeatSam * matSamLatClassic;
+        plot(matFeatLatClassic(1,:),matFeatLatClassic(2,:),<span class="string">'ro'</span>,<span class="string">'markersize'</span>,MARKERSIZE+2,<span class="string">'markerfacecolor'</span>,colorList(countTrial,:),<span class="string">'markeredgecolor'</span>,[0.5 0.5 0.5])
+        ind = convhull(matFeatLatClassic(1:2,:)');
+        plot(matFeatLatClassic(1,ind), matFeatLatClassic(2,ind), <span class="string">'-'</span>, <span class="string">'color'</span>, [0.5 0.5 0.5]);
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> plotFigure
+        figure(hMain)
+        subplot(133),
+        <span class="keyword">if</span> countTrial == 1
+            set(gca,<span class="string">'fontsize'</span>,FONTSIZE), box <span class="string">on</span>
+            hold <span class="string">on</span>
+            plot(matFeatSam(1,:),matFeatSam(2,:),<span class="string">'o'</span>,<span class="string">'markersize'</span>,MARKERSIZE,<span class="string">'markerfacecolor'</span>,[0.5 0.5 0.5],<span class="string">'markeredgecolor'</span>,<span class="string">'b'</span>)
+        <span class="keyword">end</span>
+        <span class="keyword">if</span> countTrial == maxTrial
+            title(<span class="string">'(b'') Standard solution projected to latent space'</span>)
+            grid <span class="string">on</span>
+        <span class="keyword">end</span>
+        matFeatLatClassic = matFeatSam * matSamLatClassic;
+        hold <span class="string">on</span>, plot(matFeatLatClassic(1,:),matFeatLatClassic(2,:),<span class="string">'ro'</span>,<span class="string">'markersize'</span>,MARKERSIZE+2,<span class="string">'markerfacecolor'</span>,colorList(countTrial,:),<span class="string">'markeredgecolor'</span>,[0.5 0.5 0.5])
+        ind = convhull(matFeatLatClassic(1:2,:)');
+        plot(matFeatLatClassic(1,ind), matFeatLatClassic(2,ind), <span class="string">'-'</span>, <span class="string">'color'</span>, [0.5 0.5 0.5]);
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> ~plotFigure
+        <span class="comment">% Testing dataset, compute matLatSam given archetypes</span>
+        matFeatLatEM = matFeatSam * matSamLatEM;
+        matFeatLatClassic = matFeatSam * matSamLatClassic;
+
+        matFeatSam = matFeatLat * matLatSam;
+        nFeatSam = mnrnd(ceil(1000*rand(n,1) + 1000), matFeatSam')';
+        matFeatSam = bsxfun(@rdivide, nFeatSam, sum(nFeatSam)); <span class="comment">% empirical</span>
+
+        clear <span class="string">matLatSamEM</span> <span class="string">objEM</span>
+        options.matFeatLat = matFeatLatEM;
+        <span class="keyword">for</span> countEM = 1:maxStart
+            [~, matLatSamEM{countEM}, objEM{countEM}] = paa_stochastic(nFeatSam, K, options);
+        <span class="keyword">end</span>
+        [~, ind] = min(cellfun(@(x)(x(end)), objEM));
+        matLatSamEM = matLatSamEM{ind};
+        nllList(countTrial, 1) = computeCostStochastic(nFeatSam, matFeatLatEM * matLatSamEM);
+        l1List(countTrial, 1) = norm(matFeatSam - matFeatLatEM * matLatSamEM);
+        options.matFeatLat = [];
+
+        matLatSamClassic = classic_aa_test(nFeatSam);
+        nllList(countTrial, 2) = computeCostStochastic(nFeatSam, matFeatLatClassic * matLatSamClassic);
+        l1List(countTrial, 2) = norm(matFeatSam - matFeatLatClassic * matLatSamClassic, 1);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="keyword">if</span> plotFigure
+    legend(<span class="string">'samples'</span>,<span class="string">'archetypes'</span>,<span class="string">'location'</span>,<span class="string">'NorthEast'</span>)
+<span class="keyword">end</span>
+<span class="keyword">if</span> saveFigure == 1
+    saveas(gcf,<span class="string">'compareProbVsStandard.eps'</span>,<span class="string">'epsc'</span>)
+    <span class="syscmd">!epstopdf  compareProbVsStandard.eps</span>
+<span class="keyword">end</span>
+save <span class="string">compareProbVsDefault_stochastic</span> <span class="string">nllList</span> <span class="string">l1List</span>
+</pre><pre class="codeoutput">
+
+
+
+
+
+
+
+
+
+Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+
+*** k=5, rep=1:
+
+
+
+
+
+
+
+
+
+
+Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+
+*** k=5, rep=1:
+
+
+
+
+
+
+
+
+
+
+Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+
+*** k=5, rep=1:
+
+
+
+
+
+
+
+
+
+
+Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+
+*** k=5, rep=1:
+
+
+
+
+
+
+
+
+
+
+Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+
+*** k=5, rep=1:
+
+
+
+
+
+
+
+
+
+
+Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+
+*** k=5, rep=1:
+
+
+
+
+
+
+
+
+
+
+Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+
+*** k=5, rep=1:
+
+
+
+
+
+
+
+
+
+
+Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+
+*** k=5, rep=1:
+
+
+
+
+
+
+
+
+
+
+Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+
+*** k=5, rep=1:
+
+
+
+
+
+
+
+
+
+
+Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+
+*** k=5, rep=1:
+</pre><img vspace="5" hspace="5" src="compareProbVsClassic_multinomial_01.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% Qualitative assessment of probabilistic archetypal analysis and standard
+% archetypal analysis by Cutler and Breiman on different observation models
+%
+% Additional info: Figures 4, 5 and 6 in article Probabilistic Archetypal
+% Analysis by Seth and Eugster in Machine Learning Journal
+%
+% Copyright Sohan Seth sohan.seth@hiit.fi
+
+close all,  %clearvars -except saveFigure plotFigure maxStart;
+chooseFigure = 6;
+saveFigure = 0; plotFigure = 1; maxTrial = 10; % 10 for figure, 100 for NLL
+maxStart = 10; % Run PAA maxStart times and take best solution
+
+computeCostBernoulli = @(X, P)(sum(sum(-X.*log(double(P + eps)))) ...
+    + sum(sum(-(1 - X).*log(1 - double(P) + eps))) );
+computeCostPoisson = @(X, R)(sum(sum(- X .* log(R + eps) + R)));
+computeCostStochastic = @(X, P)...
+    (- sum(sum(X .* log(P + eps),2)));
+
+%% Multinomial data
+rng default, close all,
+MARKERSIZE = 4; FONTSIZE = 6;
+if plotFigure; hMain = figure('papersize',[8.5 11],'paperposition',[0 0 8 2]); end;
+setenv('DYLD_LIBRARY_PATH', '/usr/local/bin/');
+
+d = 3;          % Dimensionality
+K = 5;          % Number of archetypes
+n = 500;        % Number of observations (500 for figure, 100 otherwise)
+colorList = summer(maxTrial);
+gammaParam = 0.5; % Concentration of Dirichlet distribution for H
+if d ~= 3
+    fprintf('Only valid for d = 3.\n')
+end
+matFeatLat = convexCircle(K);
+matLatSam = gamrnd(gammaParam, 1, K, n); matLatSam = bsxfun(@rdivide, matLatSam, sum(matLatSam));
+matFeatSam = matFeatLat * matLatSam;
+nFeatSam = mnrnd(ceil(1000*rand(n,1) + 1000), matFeatSam')';
+
+options = generate_options();
+options.maxIter = 1000;
+options.verbose = false;
+options.eps = 10^-6;
+options.display = 0;
+
+matFeatSam = bsxfun(@rdivide, nFeatSam, sum(nFeatSam));
+l1List = zeros(maxTrial, 2); nllList = zeros(maxTrial, 2);
+for countTrial = 1:maxTrial
+    matSamLatEM = cell(maxStart,1);
+    matLatSamEM = cell(maxStart,1);
+    objEM = cell(maxStart,1);
+    for count = 1:maxStart
+        [matSamLatEM{count}, matLatSamEM{count}, objEM{count}] = paa_stochastic(nFeatSam, K, options);
+    end
+    [~, ind] = min(cellfun(@(x)(x(end)), objEM));
+    matSamLatEM = matSamLatEM{ind};
+    matLatSamEM = matLatSamEM{ind};
+    
+    if plotFigure
+        figure(hMain)
+        subplot(131),
+        if countTrial == 1
+            set(gca,'fontsize',FONTSIZE), box on
+            hold on
+            plot(matFeatSam(1,:),matFeatSam(2,:),'o','markersize',MARKERSIZE,'markerfacecolor',[0.5 0.5 0.5],'markeredgecolor','b')
+        end
+        if countTrial == maxTrial
+            %ind = convhull(matFeatSam(1:2,:)');
+            %hold on, plot(matFeatSam(1,ind), matFeatSam(2,ind), '-', 'color', [0.5 0.5 0.5]); hold off
+            title('(a) EM solution in the latent space')
+            grid on
+        end
+        matFeatLatEM = matFeatSam * matSamLatEM;
+        plot(matFeatLatEM(1,:),matFeatLatEM(2,:),'ro','markersize',MARKERSIZE+2,'markerfacecolor',colorList(countTrial,:),'markeredgecolor',[0.5 0.5 0.5])
+        ind = convhull(matFeatLatEM(1:2,:)');
+        plot(matFeatLatEM(1,ind), matFeatLatEM(2,ind), '-', 'color', [0.5 0.5 0.5]);
+    end
+    
+    if plotFigure
+        [matSamLatClassic, matLatSamClassic, objClassic] = classic_aa_plot(nFeatSam + rand(size(nFeatSam)), K);
+    else
+        [matSamLatClassic, matLatSamClassic, objClassic] = classic_aa(nFeatSam + rand(size(nFeatSam)), K);
+    end
+    
+    if plotFigure
+        figure(hMain)
+        subplot(132),
+        if countTrial == 1
+            set(gca,'fontsize',FONTSIZE), box on
+            hold on
+            plot(nFeatSam(1,:),nFeatSam(2,:),'o','markersize',MARKERSIZE,'markerfacecolor',[0.5 0.5 0.5],'markeredgecolor','b')
+        end
+        if countTrial == maxTrial
+            title('(b) Standard solution in the observation space')
+            grid on
+        end
+        matFeatLatClassic = nFeatSam * matSamLatClassic;
+        plot(matFeatLatClassic(1,:),matFeatLatClassic(2,:),'ro','markersize',MARKERSIZE+2,'markerfacecolor',colorList(countTrial,:),'markeredgecolor',[0.5 0.5 0.5])
+        ind = convhull(matFeatLatClassic(1:2,:)');
+        plot(matFeatLatClassic(1,ind), matFeatLatClassic(2,ind), '-', 'color', [0.5 0.5 0.5]);
+    end
+    
+    if plotFigure
+        figure(hMain)
+        subplot(133),
+        if countTrial == 1
+            set(gca,'fontsize',FONTSIZE), box on
+            hold on
+            plot(matFeatSam(1,:),matFeatSam(2,:),'o','markersize',MARKERSIZE,'markerfacecolor',[0.5 0.5 0.5],'markeredgecolor','b')
+        end
+        if countTrial == maxTrial
+            title('(b'') Standard solution projected to latent space')
+            grid on
+        end
+        matFeatLatClassic = matFeatSam * matSamLatClassic;
+        hold on, plot(matFeatLatClassic(1,:),matFeatLatClassic(2,:),'ro','markersize',MARKERSIZE+2,'markerfacecolor',colorList(countTrial,:),'markeredgecolor',[0.5 0.5 0.5])
+        ind = convhull(matFeatLatClassic(1:2,:)');
+        plot(matFeatLatClassic(1,ind), matFeatLatClassic(2,ind), '-', 'color', [0.5 0.5 0.5]);
+    end
+    
+    if ~plotFigure
+        % Testing dataset, compute matLatSam given archetypes
+        matFeatLatEM = matFeatSam * matSamLatEM;
+        matFeatLatClassic = matFeatSam * matSamLatClassic;
+        
+        matFeatSam = matFeatLat * matLatSam;
+        nFeatSam = mnrnd(ceil(1000*rand(n,1) + 1000), matFeatSam')';
+        matFeatSam = bsxfun(@rdivide, nFeatSam, sum(nFeatSam)); % empirical
+        
+        clear matLatSamEM objEM
+        options.matFeatLat = matFeatLatEM;
+        for countEM = 1:maxStart
+            [~, matLatSamEM{countEM}, objEM{countEM}] = paa_stochastic(nFeatSam, K, options);
+        end
+        [~, ind] = min(cellfun(@(x)(x(end)), objEM));
+        matLatSamEM = matLatSamEM{ind};
+        nllList(countTrial, 1) = computeCostStochastic(nFeatSam, matFeatLatEM * matLatSamEM);
+        l1List(countTrial, 1) = norm(matFeatSam - matFeatLatEM * matLatSamEM);
+        options.matFeatLat = [];
+        
+        matLatSamClassic = classic_aa_test(nFeatSam);
+        nllList(countTrial, 2) = computeCostStochastic(nFeatSam, matFeatLatClassic * matLatSamClassic);
+        l1List(countTrial, 2) = norm(matFeatSam - matFeatLatClassic * matLatSamClassic, 1);
+    end
+end
+if plotFigure
+    legend('samples','archetypes','location','NorthEast')
+end
+if saveFigure == 1
+    saveas(gcf,'compareProbVsStandard.eps','epsc')
+    !epstopdf  compareProbVsStandard.eps
+end
+save compareProbVsDefault_stochastic nllList l1List
+##### SOURCE END #####
+--></body></html>

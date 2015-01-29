@@ -1,0 +1,459 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Demo for PAA codes</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-01-29"><meta name="DC.source" content="demo.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Demo for PAA codes</h1><!--introduction--><p>copyright (c) Sohan Seth, <a href="mailto:sohan.seth@hiit.fi">sohan.seth@hiit.fi</a></p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Poisson observation</a></li><li><a href="#2">Bernoulli observation</a></li><li><a href="#3">Multinomial observations</a></li><li><a href="#4">Normal observation</a></li><li><a href="#5">Normal observation with R interface</a></li></ul></div><h2>Poisson observation<a name="1"></a></h2><pre class="codeinput">close <span class="string">all</span>
+rng <span class="string">default</span>,
+options = generate_options();
+options.verbose = true;
+options.display = true;
+options.eps = 10^-10;
+options.maxIter = 100000;
+options.matFeatLat = [];
+n = 100;
+
+<span class="comment">% Generating data</span>
+matFeatSam = [ceil(rand(1,n)*10); ceil(rand(1,n)*10)];
+
+<span class="comment">% Learning archetypes</span>
+[matSamLat, matLatSam_1, ~] = paa_Poisson(matFeatSam, 4, options);
+archetypes = matFeatSam * matSamLat;
+axis([0 11 0 11]), box <span class="string">on</span>, set(gca, <span class="string">'fontsize'</span>, 20)
+
+<span class="comment">% Computing projections given archetypes</span>
+options.matFeatLat = archetypes;
+options.display = false;
+[~, matLatSam_2, ~] = paa_Poisson(matFeatSam, [], options);
+
+fprintf(<span class="string">'difference between projections %0.6f\n'</span>, <span class="keyword">...</span>
+    norm(archetypes * matLatSam_2 - archetypes * matLatSam_1, 1) / numel(matFeatSam))
+</pre><pre class="codeoutput">.......... [1000]
+.......... [2000]
+.......... [3000]
+.......... [4000]
+.......... [5000]
+.......... [6000]
+.......... [7000]
+.......... [8000]
+.......... [9000]
+.......... [10000]
+.......... [11000]
+.......... [12000]
+.......... [13000]
+.......... [14000]
+.......... [15000]
+.......... [16000]
+.......... [17000]
+.......... [18000]
+.......... [19000]
+.......... [20000]
+.......... [21000]
+.......... [22000]
+.......... [23000]
+.......... [24000]
+.......... [25000]
+.......... [26000]
+.......... [27000]
+.....
+convergence reached in 27547 iterations
+
+.......... [1000]
+.......... [2000]
+.......... [3000]
+.......... [4000]
+.......... [5000]
+.......... [6000]
+.......... [7000]
+.......... [8000]
+.......... [9000]
+.........
+convergence reached in 9991 iterations
+
+difference between projections 0.000096
+</pre><img vspace="5" hspace="5" src="demo_01.png" alt=""> <h2>Bernoulli observation<a name="2"></a></h2><pre class="codeinput">close <span class="string">all</span>
+rng <span class="string">default</span>,
+options = generate_options();
+options.verbose = true;
+options.display = true;
+options.eps = 10^-6;
+options.maxIter = 1000;
+options.matFeatLat = [];
+n = 500;
+
+<span class="comment">% Generating data</span>
+matFeatSam = [rand(1,n) &gt; 0.8; rand(1,n) &gt; 0.2];
+
+<span class="comment">% Learning archetypes</span>
+[matSamLat, matLatSam_1, ~] = paa_Bernoulli(matFeatSam, 4, options);
+archetypes = matFeatSam * matSamLat;
+axis([-0.1 1.1 -0.1 1.1]), box <span class="string">on</span>, set(gca, <span class="string">'fontsize'</span>, 20)
+
+<span class="comment">% Computing projections given archetypes</span>
+options.matFeatLat = archetypes;
+options.display = false;
+[~, matLatSam_2, ~] = paa_Bernoulli(matFeatSam, [], options);
+
+fprintf(<span class="string">'difference between projections %0.6f\n'</span>, <span class="keyword">...</span>
+    norm(archetypes * matLatSam_2 - archetypes * matLatSam_1, 1) / numel(matFeatSam))
+</pre><pre class="codeoutput">.......... [100]
+
+convergence reached in 105 iterations
+
+.....
+convergence reached in 54 iterations
+
+difference between projections 0.000000
+</pre><img vspace="5" hspace="5" src="demo_02.png" alt=""> <h2>Multinomial observations<a name="3"></a></h2><pre class="codeinput">close <span class="string">all</span>
+rng <span class="string">default</span>,
+options = generate_options();
+options.verbose = true;
+options.display = true;
+options.eps = 10^-6;
+options.maxIter = 10000;
+options.matFeatLat = [];
+n = 500;
+
+<span class="comment">% Generating data</span>
+matFeatSam = rand(3, n); matFeatSam = bsxfun(@rdivide, matFeatSam, sum(matFeatSam));
+nFeatSam = mnrnd(1000, matFeatSam')';
+matFeatSam = bsxfun(@rdivide, nFeatSam, sum(nFeatSam)); <span class="comment">% empirical probabilities</span>
+
+<span class="comment">% Learning archetypes</span>
+[matSamLat, matLatSam_1, ~] = paa_stochastic(nFeatSam, 3, options);
+archetypes = matFeatSam * matSamLat;
+axis([0 1000 0 1000]), box <span class="string">on</span>, set(gca, <span class="string">'fontsize'</span>, 20)
+
+<span class="comment">% Computing projections given archetypes</span>
+options.matFeatLat = archetypes;
+options.display = false;
+[~, matLatSam_2, ~] = paa_stochastic(nFeatSam, [], options);
+
+fprintf(<span class="string">'difference between projections %0.6f\n'</span>, <span class="keyword">...</span>
+    norm(archetypes * matLatSam_2 - archetypes * matLatSam_1, 1) / numel(matFeatSam))
+</pre><pre class="codeoutput">More than two features. Only the first two will be displayed.
+.......... [100]
+.......... [200]
+.......... [300]
+.......... [400]
+.......... [500]
+.......... [600]
+.....
+convergence reached in 657 iterations
+
+..
+convergence reached in 23 iterations
+
+difference between projections 0.000024
+</pre><img vspace="5" hspace="5" src="demo_03.png" alt=""> <h2>Normal observation<a name="4"></a></h2><pre class="codeinput">close <span class="string">all</span>
+rng <span class="string">default</span>,
+options = generate_options();
+options.verbose = true;
+options.display = true;
+options.eps = 10^-6;
+options.maxIter = 20;
+options.matFeatLat = [];
+n = 100;
+
+<span class="comment">% Generating data</span>
+matFeatSam = [rand(1,n); rand(1,n)];
+
+<span class="comment">% Learning archetypes</span>
+[matSamLat, matLatSam_1, ~] = paa_normal(matFeatSam, 4, options);
+archetypes = matFeatSam * matSamLat;
+axis([0 1 0 1]), box <span class="string">on</span>, set(gca, <span class="string">'fontsize'</span>, 20)
+
+<span class="comment">% Computing projections given archetypes</span>
+options.matFeatLat = archetypes;
+options.display = false;
+[~, matLatSam_2, ~] = paa_normal(matFeatSam, [], options);
+
+fprintf(<span class="string">'difference between projections %0.6f\n'</span>, <span class="keyword">...</span>
+    norm(archetypes * matLatSam_2 - archetypes * matLatSam_1, 1) / numel(matFeatSam))
+</pre><pre class="codeoutput">alpha 1.00 beta 1.00
+[Iteration 1]
+[Iteration 2]
+[Iteration 3]
+[Iteration 4]
+[Iteration 5]
+[Iteration 6]
+[Iteration 7]
+[Iteration 8]
+[Iteration 9]
+[Iteration 10]
+[Iteration 11]
+[Iteration 12]
+[Iteration 13]
+[Iteration 14]
+[Iteration 15]
+[Iteration 16]
+[Iteration 17]
+[Iteration 18]
+[Iteration 19]
+[Iteration 20]
+
+alpha 1.00 beta 1.00
+
+difference between projections 0.001373
+</pre><img vspace="5" hspace="5" src="demo_04.png" alt=""> <h2>Normal observation with R interface<a name="5"></a></h2><pre class="codeinput">close <span class="string">all</span>
+rng <span class="string">default</span>,
+<span class="comment">% Generating data</span>
+matFeatSam = [rand(1,n); rand(1,n)];
+
+<span class="comment">% Learning archetypes</span>
+[matSamLat, matLatSam_1, ~] = classic_aa(matFeatSam, 4);
+archetypes = matFeatSam * matSamLat;
+
+<span class="comment">% Computing projections given archetypes</span>
+matLatSam_2 = classic_aa_test(matFeatSam);
+
+fprintf(<span class="string">'difference between projections %0.6f\n'</span>, <span class="keyword">...</span>
+    norm(archetypes * matLatSam_2 - archetypes * matLatSam_1, 1) / numel(matFeatSam))
+</pre><pre class="codeoutput">Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+
+*** k=4, rep=1:
+
+*** k=4, rep=2:
+
+*** k=4, rep=3:
+
+*** k=4, rep=4:
+
+*** k=4, rep=5:
+
+*** k=4, rep=6:
+
+*** k=4, rep=7:
+
+*** k=4, rep=8:
+
+*** k=4, rep=9:
+
+*** k=4, rep=10:
+Warning messages:
+1: In method(..., k = k[i]) :
+  k=4: Error in qr.solve(alphas %*% t(alphas)): singular matrix 'a' in solve
+
+2: In method(..., k = k[i]) :
+  k=4: Error in qr.solve(alphas %*% t(alphas)): singular matrix 'a' in solve
+
+Loading required package: methods
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: nnls
+R.matlab v3.1.1 (2014-10-10) successfully loaded. See ?R.matlab for help.
+
+Attaching package: 'R.matlab'
+
+The following objects are masked from 'package:base':
+
+    getOption, isOpen
+
+difference between projections 0.000000
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Demo for PAA codes
+% copyright (c) Sohan Seth, sohan.seth@hiit.fi
+
+
+%% Poisson observation
+close all
+rng default,
+options = generate_options(); 
+options.verbose = true; 
+options.display = true;
+options.eps = 10^-10;
+options.maxIter = 100000;
+options.matFeatLat = [];
+n = 100;
+
+% Generating data
+matFeatSam = [ceil(rand(1,n)*10); ceil(rand(1,n)*10)];
+
+% Learning archetypes
+[matSamLat, matLatSam_1, ~] = paa_Poisson(matFeatSam, 4, options);
+archetypes = matFeatSam * matSamLat;
+axis([0 11 0 11]), box on, set(gca, 'fontsize', 20)
+
+% Computing projections given archetypes
+options.matFeatLat = archetypes;
+options.display = false;
+[~, matLatSam_2, ~] = paa_Poisson(matFeatSam, [], options);
+
+fprintf('difference between projections %0.6f\n', ...
+    norm(archetypes * matLatSam_2 - archetypes * matLatSam_1, 1) / numel(matFeatSam))
+
+%% Bernoulli observation
+close all
+rng default,
+options = generate_options(); 
+options.verbose = true; 
+options.display = true;
+options.eps = 10^-6;
+options.maxIter = 1000;
+options.matFeatLat = [];
+n = 500;
+
+% Generating data
+matFeatSam = [rand(1,n) > 0.8; rand(1,n) > 0.2];
+
+% Learning archetypes
+[matSamLat, matLatSam_1, ~] = paa_Bernoulli(matFeatSam, 4, options);
+archetypes = matFeatSam * matSamLat;
+axis([-0.1 1.1 -0.1 1.1]), box on, set(gca, 'fontsize', 20)
+
+% Computing projections given archetypes
+options.matFeatLat = archetypes;
+options.display = false;
+[~, matLatSam_2, ~] = paa_Bernoulli(matFeatSam, [], options);
+
+fprintf('difference between projections %0.6f\n', ...
+    norm(archetypes * matLatSam_2 - archetypes * matLatSam_1, 1) / numel(matFeatSam))
+
+%% Multinomial observations
+close all
+rng default,
+options = generate_options(); 
+options.verbose = true; 
+options.display = true;
+options.eps = 10^-6;
+options.maxIter = 10000;
+options.matFeatLat = [];
+n = 500;
+
+% Generating data
+matFeatSam = rand(3, n); matFeatSam = bsxfun(@rdivide, matFeatSam, sum(matFeatSam));
+nFeatSam = mnrnd(1000, matFeatSam')';
+matFeatSam = bsxfun(@rdivide, nFeatSam, sum(nFeatSam)); % empirical probabilities
+
+% Learning archetypes
+[matSamLat, matLatSam_1, ~] = paa_stochastic(nFeatSam, 3, options);
+archetypes = matFeatSam * matSamLat;
+axis([0 1000 0 1000]), box on, set(gca, 'fontsize', 20)
+
+% Computing projections given archetypes
+options.matFeatLat = archetypes;
+options.display = false;
+[~, matLatSam_2, ~] = paa_stochastic(nFeatSam, [], options);
+
+fprintf('difference between projections %0.6f\n', ...
+    norm(archetypes * matLatSam_2 - archetypes * matLatSam_1, 1) / numel(matFeatSam))
+
+%% Normal observation
+close all
+rng default,
+options = generate_options(); 
+options.verbose = true; 
+options.display = true;
+options.eps = 10^-6;
+options.maxIter = 20;
+options.matFeatLat = [];
+n = 100;
+
+% Generating data
+matFeatSam = [rand(1,n); rand(1,n)];
+
+% Learning archetypes
+[matSamLat, matLatSam_1, ~] = paa_normal(matFeatSam, 4, options);
+archetypes = matFeatSam * matSamLat;
+axis([0 1 0 1]), box on, set(gca, 'fontsize', 20)
+
+% Computing projections given archetypes
+options.matFeatLat = archetypes;
+options.display = false;
+[~, matLatSam_2, ~] = paa_normal(matFeatSam, [], options);
+
+fprintf('difference between projections %0.6f\n', ...
+    norm(archetypes * matLatSam_2 - archetypes * matLatSam_1, 1) / numel(matFeatSam))
+
+%% Normal observation with R interface
+close all
+rng default,
+% Generating data
+matFeatSam = [rand(1,n); rand(1,n)];
+
+% Learning archetypes
+[matSamLat, matLatSam_1, ~] = classic_aa(matFeatSam, 4);
+archetypes = matFeatSam * matSamLat;
+
+% Computing projections given archetypes
+matLatSam_2 = classic_aa_test(matFeatSam);
+
+fprintf('difference between projections %0.6f\n', ...
+    norm(archetypes * matLatSam_2 - archetypes * matLatSam_1, 1) / numel(matFeatSam))
+##### SOURCE END #####
+--></body></html>

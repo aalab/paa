@@ -1,0 +1,202 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Plot convergence curves for PAA</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-01-29"><meta name="DC.source" content="plotConvergence.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Plot convergence curves for PAA</h1><p>Additional info: Figures 9 in article Probabilistic Archetypal Analysis by Seth and Eugster in Machine Learning Journal</p><p>Copyright Sohan Seth <a href="mailto:sohan.seth@hiit.fi">sohan.seth@hiit.fi</a></p><pre class="codeinput">verbose = false;
+figure(<span class="string">'papertype'</span>, <span class="string">'a4'</span>, <span class="string">'paperposition'</span>, [0 0 7 3.5])
+datasetList = {<span class="string">'soccer'</span>, <span class="string">'nips'</span>, <span class="string">'guest survey'</span>, <span class="string">'disaster'</span>};
+<span class="keyword">for</span> dataset = datasetList
+    <span class="keyword">switch</span> char(dataset)
+        <span class="keyword">case</span> <span class="string">'soccer'</span>
+            filePath = <span class="string">'../../examples/archeplayers/result_soccer/result_arch_4_trial_'</span>;
+            MIN = 50;
+            XTICK = [MIN, 150, 400];
+        <span class="keyword">case</span> <span class="string">'nips'</span>
+            filePath = <span class="string">'../../examples/NIPS/resultEM/result_arch_10_trial_'</span>;
+            MIN = 2;
+            XTICK = [MIN, 20, 50];
+        <span class="keyword">case</span> <span class="string">'guest survey'</span>
+            filePath = <span class="string">'../../examples/GSAW97/result/result_arch_6_trial_'</span>;
+            MIN = 200;
+            XTICK = [MIN, 1500, 3000];
+        <span class="keyword">case</span> <span class="string">'disaster'</span>
+            filePath = <span class="string">'../../examples/Disaster/results/resultDisaster_arch_10_trial_'</span>;
+            MIN = 1000;
+            XTICK = [MIN, 8000, 15000];
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> 0 <span class="comment">%exist('data_Covergence')</span>
+        objList = cell(10, 1);
+        <span class="keyword">for</span> countTrial = 1:10
+            load(sprintf(<span class="string">'%s%d.mat'</span>, filePath, countTrial));
+            <span class="keyword">if</span> strcmp(char(dataset), <span class="string">'nips'</span>) | strcmp(char(dataset), <span class="string">'soccer'</span>)
+                obj = -obj;
+            <span class="keyword">end</span>
+
+            obj([false; abs((obj(1:end-1) - obj(2:end))./obj(1:end-1)) &lt; 10^-6.5]) = [];
+            objList{countTrial}.x = MIN:length(obj);
+            objList{countTrial}.y = obj(MIN:end);
+            <span class="keyword">if</span> verbose
+                fprintf(<span class="string">'threshold reached? %d\n'</span>, <span class="keyword">...</span>
+                    abs((obj(end) - obj(end-1)) / obj(end - 1)) &lt; 10^-6)
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        save(sprintf(<span class="string">'data_Convergence/%s'</span>, char(dataset)), <span class="string">'objList'</span>)
+
+    <span class="keyword">else</span>
+        load(sprintf(<span class="string">'data_Convergence/%s'</span>, char(dataset)), <span class="string">'objList'</span>)
+    <span class="keyword">end</span>
+
+
+    subplot(2, 2, find(strcmp(dataset, datasetList))),
+    hold <span class="string">on</span>
+    <span class="keyword">for</span> countTrial = 1:10
+        plot(objList{countTrial}.x, objList{countTrial}.y, <span class="keyword">...</span>
+            <span class="string">'color'</span>, [1 1 1] * 0.4)
+    <span class="keyword">end</span>
+    axis <span class="string">tight</span>
+    set(gca, <span class="string">'fontsize'</span>, 10, <span class="string">'xtick'</span>, XTICK, <span class="keyword">...</span>
+        <span class="string">'xticklabel'</span>, num2str(XTICK'))<span class="comment">%, 'yscale', 'log')</span>
+    xlabel(<span class="string">'Iteration'</span>), ylabel(<span class="string">'cost'</span>);
+    title(dataset)
+    box <span class="string">on</span>, grid <span class="string">on</span>
+<span class="keyword">end</span>
+<span class="comment">% print('-dpng','-r400','../../Paper-NIPS-ICML-arXiv-KDD-ML/convergence.png')</span>
+<span class="comment">% saveas(gca, '../../Paper-NIPS-ICML-arXiv-KDD-ML/convergence.eps', 'epsc')</span>
+</pre><img vspace="5" hspace="5" src="plotConvergence_01.png" alt=""> <pre class="codeinput">close <span class="string">all</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Plot convergence curves for PAA
+%
+% Additional info: Figures 9 in article Probabilistic Archetypal
+% Analysis by Seth and Eugster in Machine Learning Journal
+%
+% Copyright Sohan Seth sohan.seth@hiit.fi
+
+verbose = false;
+figure('papertype', 'a4', 'paperposition', [0 0 7 3.5])
+datasetList = {'soccer', 'nips', 'guest survey', 'disaster'};
+for dataset = datasetList
+    switch char(dataset)
+        case 'soccer'
+            filePath = '../../examples/archeplayers/result_soccer/result_arch_4_trial_';
+            MIN = 50;
+            XTICK = [MIN, 150, 400];
+        case 'nips'
+            filePath = '../../examples/NIPS/resultEM/result_arch_10_trial_';
+            MIN = 2;
+            XTICK = [MIN, 20, 50];
+        case 'guest survey'
+            filePath = '../../examples/GSAW97/result/result_arch_6_trial_';
+            MIN = 200;
+            XTICK = [MIN, 1500, 3000];
+        case 'disaster'
+            filePath = '../../examples/Disaster/results/resultDisaster_arch_10_trial_';
+            MIN = 1000;
+            XTICK = [MIN, 8000, 15000];
+    end
+    if 0 %exist('data_Covergence')
+        objList = cell(10, 1);
+        for countTrial = 1:10
+            load(sprintf('%s%d.mat', filePath, countTrial));
+            if strcmp(char(dataset), 'nips') | strcmp(char(dataset), 'soccer')
+                obj = -obj;
+            end
+            
+            obj([false; abs((obj(1:end-1) - obj(2:end))./obj(1:end-1)) < 10^-6.5]) = [];
+            objList{countTrial}.x = MIN:length(obj);
+            objList{countTrial}.y = obj(MIN:end);
+            if verbose
+                fprintf('threshold reached? %d\n', ...
+                    abs((obj(end) - obj(end-1)) / obj(end - 1)) < 10^-6)
+            end
+        end
+        save(sprintf('data_Convergence/%s', char(dataset)), 'objList')
+        
+    else
+        load(sprintf('data_Convergence/%s', char(dataset)), 'objList')
+    end
+    
+    
+    subplot(2, 2, find(strcmp(dataset, datasetList))),
+    hold on
+    for countTrial = 1:10
+        plot(objList{countTrial}.x, objList{countTrial}.y, ...
+            'color', [1 1 1] * 0.4)
+    end
+    axis tight
+    set(gca, 'fontsize', 10, 'xtick', XTICK, ...
+        'xticklabel', num2str(XTICK'))%, 'yscale', 'log')
+    xlabel('Iteration'), ylabel('cost');
+    title(dataset)
+    box on, grid on
+end
+% print('-dpng','-r400','../../Paper-NIPS-ICML-arXiv-KDD-ML/convergence.png')
+% saveas(gca, '../../Paper-NIPS-ICML-arXiv-KDD-ML/convergence.eps', 'epsc')
+%%
+close all
+##### SOURCE END #####
+--></body></html>
